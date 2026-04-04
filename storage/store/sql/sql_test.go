@@ -912,7 +912,7 @@ func TestEventOrderingFix(t *testing.T) {
 	}
 	// Now retrieve events with pagination to test the ordering
 	tx, _ := store.db.Begin()
-	endpointID, _, _, _ := store.getEndpointIDGroupAndNameByKey(tx, ep.Key())
+	endpointID, _, _, _, _ := store.getEndpointIDGroupAndNameByKey(tx, ep.Key())
 	// Get the first page (should get the MOST RECENT events, but in chronological order)
 	events, err := store.getEndpointEventsByEndpointID(tx, endpointID, 1, 10)
 	tx.Commit()

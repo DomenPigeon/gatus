@@ -20,6 +20,12 @@
             <StatusBadge :status="currentHealthStatus" />
           </div>
 
+          <Card v-if="endpointStatus.description" class="bg-muted/50">
+            <CardContent class="pt-6">
+              <p class="text-sm text-muted-foreground" v-html="sanitizedDescription"></p>
+            </CardContent>
+          </Card>
+
           <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader class="pb-2">
@@ -213,6 +219,7 @@ import Pagination from '@/components/Pagination.vue'
 import Loading from '@/components/Loading.vue'
 import ResponseTimeChart from '@/components/ResponseTimeChart.vue'
 import { generatePrettyTimeAgo, generatePrettyTimeDifference } from '@/utils/time'
+import DOMPurify from 'dompurify'
 
 const router = useRouter()
 const route = useRoute()
@@ -239,6 +246,12 @@ const latestResult = computed(() => {
 const currentHealthStatus = computed(() => {
   if (!latestResult.value) return 'unknown'
   return latestResult.value.success ? 'healthy' : 'unhealthy'
+})
+
+const sanitizedDescription = computed(() => {
+  if (!endpointStatus.value || !endpointStatus.value.description) return ''
+  const sanitized = DOMPurify.sanitize(endpointStatus.value.description)
+  return sanitized || '<em>Description contains invalid HTML</em>'
 })
 
 const hostname = computed(() => {

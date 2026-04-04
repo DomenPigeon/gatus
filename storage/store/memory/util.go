@@ -10,10 +10,11 @@ import (
 // within the range defined by the page and pageSize parameters
 func ShallowCopyEndpointStatus(ss *endpoint.Status, params *paging.EndpointStatusParams) *endpoint.Status {
 	shallowCopy := &endpoint.Status{
-		Name:   ss.Name,
-		Group:  ss.Group,
-		Key:    ss.Key,
-		Uptime: endpoint.NewUptime(),
+		Name:        ss.Name,
+		Group:       ss.Group,
+		Description: ss.Description,
+		Key:         ss.Key,
+		Uptime:      endpoint.NewUptime(),
 	}
 	if params == nil || (params.ResultsPage == 0 && params.ResultsPageSize == 0 && params.EventsPage == 0 && params.EventsPageSize == 0) {
 		shallowCopy.Results = ss.Results

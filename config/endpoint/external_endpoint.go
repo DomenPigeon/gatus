@@ -31,6 +31,9 @@ type ExternalEndpoint struct {
 	// Group the endpoint is a part of. Used for grouping multiple endpoints together on the front end.
 	Group string `yaml:"group,omitempty"`
 
+	// Description is an optional description of the endpoint, displayed on the endpoint detail page.
+	Description string `yaml:"description,omitempty"`
+
 	// Token is the bearer token that must be provided through the Authorization header to push results to the endpoint
 	Token string `yaml:"token,omitempty"`
 
@@ -92,6 +95,7 @@ func (externalEndpoint *ExternalEndpoint) ToEndpoint() *Endpoint {
 		Enabled:                 externalEndpoint.Enabled,
 		Name:                    externalEndpoint.Name,
 		Group:                   externalEndpoint.Group,
+		Description:             externalEndpoint.Description,
 		Alerts:                  externalEndpoint.Alerts,
 		NumberOfFailuresInARow:  externalEndpoint.NumberOfFailuresInARow,
 		NumberOfSuccessesInARow: externalEndpoint.NumberOfSuccessesInARow,

@@ -88,6 +88,9 @@ type Endpoint struct {
 	// Group the endpoint is a part of. Used for grouping multiple endpoints together on the front end.
 	Group string `yaml:"group,omitempty"`
 
+	// Description is an optional description of the endpoint, displayed on the endpoint detail page.
+	Description string `yaml:"description,omitempty"`
+
 	// URL to send the request to
 	URL string `yaml:"url"`
 

@@ -91,6 +91,9 @@ type Endpoint struct {
 	// Description is an optional description of the endpoint, displayed on the endpoint detail page.
 	Description string `yaml:"description,omitempty"`
 
+	// Link is an optional URL that, if provided, makes the hostname on the dashboard clickable
+	Link string `yaml:"link,omitempty"`
+
 	// URL to send the request to
 	URL string `yaml:"url"`
 

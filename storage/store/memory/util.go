@@ -13,6 +13,7 @@ func ShallowCopyEndpointStatus(ss *endpoint.Status, params *paging.EndpointStatu
 		Name:        ss.Name,
 		Group:       ss.Group,
 		Description: ss.Description,
+		Link:        ss.Link,
 		Key:         ss.Key,
 		Uptime:      endpoint.NewUptime(),
 	}

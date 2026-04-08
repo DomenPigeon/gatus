@@ -14,7 +14,8 @@
               <div class="flex items-center gap-3 text-muted-foreground mt-2">
                 <span v-if="endpointStatus.group">Group: {{ endpointStatus.group }}</span>
                 <span v-if="endpointStatus.group && hostname">•</span>
-                <span v-if="hostname">{{ hostname }}</span>
+                <a v-if="hostname && endpointStatus.link" :href="endpointStatus.link" target="_blank" rel="noopener noreferrer" class="hover:underline hover:text-primary">{{ hostname }}</a>
+                <span v-else-if="hostname">{{ hostname }}</span>
               </div>
             </div>
             <StatusBadge :status="currentHealthStatus" />

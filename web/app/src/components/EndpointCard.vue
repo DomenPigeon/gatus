@@ -18,7 +18,8 @@
           <div class="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground min-h-[1.25rem]">
             <span v-if="endpoint.group" class="truncate" :title="endpoint.group">{{ endpoint.group }}</span>
             <span v-if="endpoint.group && hostname">•</span>
-            <span v-if="hostname" class="truncate" :title="hostname">{{ hostname }}</span>
+            <a v-if="hostname && endpoint.link" :href="endpoint.link" target="_blank" rel="noopener noreferrer" class="truncate hover:underline hover:text-primary" :title="hostname" @click.stop>{{ hostname }}</a>
+            <span v-else-if="hostname" class="truncate" :title="hostname">{{ hostname }}</span>
           </div>
         </div>
         <div class="flex-shrink-0 ml-2">

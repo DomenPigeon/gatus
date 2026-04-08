@@ -169,7 +169,7 @@ func (s *Store) GetUptimeByKey(key string, from, to time.Time) (float64, error) 
 	if err != nil {
 		return 0, err
 	}
-	endpointID, _, _, _, err := s.getEndpointIDGroupAndNameByKey(tx, key)
+	endpointID, _, _, _, _, err := s.getEndpointIDGroupAndNameByKey(tx, key)
 	if err != nil {
 		_ = tx.Rollback()
 		return 0, err
@@ -194,7 +194,7 @@ func (s *Store) GetAverageResponseTimeByKey(key string, from, to time.Time) (int
 	if err != nil {
 		return 0, err
 	}
-	endpointID, _, _, _, err := s.getEndpointIDGroupAndNameByKey(tx, key)
+	endpointID, _, _, _, _, err := s.getEndpointIDGroupAndNameByKey(tx, key)
 	if err != nil {
 		_ = tx.Rollback()
 		return 0, err
@@ -219,7 +219,7 @@ func (s *Store) GetHourlyAverageResponseTimeByKey(key string, from, to time.Time
 	if err != nil {
 		return nil, err
 	}
-	endpointID, _, _, _, err := s.getEndpointIDGroupAndNameByKey(tx, key)
+	endpointID, _, _, _, _, err := s.getEndpointIDGroupAndNameByKey(tx, key)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
@@ -256,8 +256,8 @@ func (s *Store) InsertEndpointResult(ep *endpoint.Endpoint, result *endpoint.Res
 			return err
 		}
 	} else {
-		// Endpoint already exists, sync the description in case it changed
-		_, _ = tx.Exec("UPDATE endpoints SET endpoint_description = $1 WHERE endpoint_id = $2", ep.Description, endpointID)
+		// Endpoint already exists, sync the description and link in case they changed
+		_, _ = tx.Exec("UPDATE endpoints SET endpoint_description = $1, endpoint_link = $2 WHERE endpoint_id = $3", ep.Description, ep.Link, endpointID)
 	}
 	// First, we need to check if we need to insert a new event.
 	//
@@ -591,11 +591,12 @@ func (s *Store) insertEndpoint(tx *sql.Tx, ep *endpoint.Endpoint) (int64, error)
 	//logr.Debugf("[sql.insertEndpoint] Inserting endpoint with group=%s and name=%s", ep.Group, ep.Name)
 	var id int64
 	err := tx.QueryRow(
-		"INSERT INTO endpoints (endpoint_key, endpoint_name, endpoint_group, endpoint_description) VALUES ($1, $2, $3, $4) RETURNING endpoint_id",
+		"INSERT INTO endpoints (endpoint_key, endpoint_name, endpoint_group, endpoint_description, endpoint_link) VALUES ($1, $2, $3, $4, $5) RETURNING endpoint_id",
 		ep.Key(),
 		ep.Name,
 		ep.Group,
 		ep.Description,
+		ep.Link,
 	).Scan(&id)
 	if err != nil {
 		return 0, err
@@ -722,11 +723,11 @@ func (s *Store) getEndpointStatusByKey(tx *sql.Tx, key string, parameters *pagin
 			}
 		}
 	}
-	endpointID, group, endpointName, description, err := s.getEndpointIDGroupAndNameByKey(tx, key)
+	endpointID, group, endpointName, description, link, err := s.getEndpointIDGroupAndNameByKey(tx, key)
 	if err != nil {
 		return nil, err
 	}
-	endpointStatus := endpoint.NewStatus(group, endpointName, description)
+	endpointStatus := endpoint.NewStatus(group, endpointName, description, link)
 	if parameters.EventsPageSize > 0 {
 		if endpointStatus.Events, err = s.getEndpointEventsByEndpointID(tx, endpointID, parameters.EventsPage, parameters.EventsPageSize); err != nil {
 			logr.Errorf("[sql.getEndpointStatusByKey] Failed to retrieve events for key=%s: %s", key, err.Error())
@@ -743,21 +744,21 @@ func (s *Store) getEndpointStatusByKey(tx *sql.Tx, key string, parameters *pagin
 	return endpointStatus, nil
 }
 
-func (s *Store) getEndpointIDGroupAndNameByKey(tx *sql.Tx, key string) (id int64, group, name, description string, err error) {
+func (s *Store) getEndpointIDGroupAndNameByKey(tx *sql.Tx, key string) (id int64, group, name, description, link string, err error) {
 	err = tx.QueryRow(
 		`
-			SELECT endpoint_id, endpoint_group, endpoint_name, endpoint_description
+			SELECT endpoint_id, endpoint_group, endpoint_name, endpoint_description, COALESCE(endpoint_link, '')
 			FROM endpoints
 			WHERE endpoint_key = $1
 			LIMIT 1
 		`,
 		key,
-	).Scan(&id, &group, &name, &description)
+	).Scan(&id, &group, &name, &description, &link)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return 0, "", "", "", common.ErrEndpointNotFound
+			return 0, "", "", "", "", common.ErrEndpointNotFound
 		}
-		return 0, "", "", "", err
+		return 0, "", "", "", "", err
 	}
 	return
 }

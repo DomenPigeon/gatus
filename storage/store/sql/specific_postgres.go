@@ -126,5 +126,7 @@ func (s *Store) createPostgresSchema() error {
 	_, _ = s.db.Exec(`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_endpoint_results_endpoint_id ON endpoint_results (endpoint_id)`)
 	// Add endpoint_description column
 	_, _ = s.db.Exec(`ALTER TABLE endpoints ADD COLUMN IF NOT EXISTS endpoint_description TEXT NOT NULL DEFAULT ''`)
+	// Add endpoint_link column
+	_, _ = s.db.Exec(`ALTER TABLE endpoints ADD COLUMN IF NOT EXISTS endpoint_link TEXT NOT NULL DEFAULT ''`)
 	return err
 }

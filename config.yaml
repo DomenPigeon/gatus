@@ -2,6 +2,8 @@ endpoints:
   - name: front-end
     group: core
     url: "https://twin.sh/health"
+    link: "https://twin.sh"
+    description: "Main front-end health check. Monitors the <b>public-facing website</b> and ensures the <code>/health</code> endpoint returns <code>UP</code>."
     interval: 5m
     conditions:
       - "[STATUS] == 200"
@@ -11,6 +13,8 @@ endpoints:
   - name: back-end
     group: core
     url: "https://example.org/"
+    link: "https://example.org"
+    description: "Back-end API server. Checks <b>HTTP status</b> and verifies the <em>TLS certificate</em> won't expire within 48 hours."
     interval: 5m
     conditions:
       - "[STATUS] == 200"

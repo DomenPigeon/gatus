@@ -23,7 +23,7 @@
 
           <Card v-if="endpointStatus.description" class="bg-muted/50">
             <CardContent class="pt-6">
-              <p class="text-sm text-muted-foreground" v-html="sanitizedDescription"></p>
+              <p class="description-content text-sm text-muted-foreground" v-html="sanitizedDescription" @click="handleDescriptionClick"></p>
             </CardContent>
           </Card>
 
@@ -204,13 +204,25 @@
     </div>
 
     <Settings @refreshData="fetchData" />
+
+    <Transition name="toast">
+      <div
+        v-if="toastMessage"
+        class="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-lg bg-foreground px-4 py-3 text-sm text-background shadow-lg"
+        role="status"
+        aria-live="polite"
+      >
+        <Check class="h-4 w-4" />
+        {{ toastMessage }}
+      </div>
+    </Transition>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { ArrowLeft, RefreshCw, ArrowUpCircle, ArrowDownCircle, PlayCircle, Activity, Timer } from 'lucide-vue-next'
+import { ArrowLeft, RefreshCw, ArrowUpCircle, ArrowDownCircle, PlayCircle, Activity, Timer, Check } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import StatusBadge from '@/components/StatusBadge.vue'
@@ -235,6 +247,42 @@ const showResponseTimeChartAndBadges = ref(false)
 const showAverageResponseTime = ref(localStorage.getItem('gatus:show-average-response-time') !== 'false')
 const selectedChartDuration = ref('24h')
 const isRefreshing = ref(false)
+const toastMessage = ref('')
+let toastTimer = null
+
+const showToast = (message) => {
+  toastMessage.value = message
+  if (toastTimer) clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => {
+    toastMessage.value = ''
+  }, 2000)
+}
+
+const handleDescriptionClick = async (event) => {
+  const el = event.target.closest('[data-copy]')
+  if (!el) return
+  event.preventDefault()
+  const value = el.dataset.copy || el.textContent || ''
+  try {
+    await navigator.clipboard.writeText(value)
+    showToast('Copied to clipboard')
+  } catch (err) {
+    // Fallback for non-secure contexts (HTTP) where clipboard API is unavailable
+    const textarea = document.createElement('textarea')
+    textarea.value = value
+    textarea.style.position = 'fixed'
+    textarea.style.opacity = '0'
+    document.body.appendChild(textarea)
+    textarea.select()
+    try {
+      document.execCommand('copy')
+      showToast('Copied to clipboard')
+    } catch {
+      showToast('Failed to copy')
+    }
+    document.body.removeChild(textarea)
+  }
+}
 
 const latestResult = computed(() => {
   // Use currentStatus for the actual latest result
@@ -417,3 +465,23 @@ onMounted(() => {
   fetchData()
 })
 </script>
+
+<style scoped>
+.description-content :deep([data-copy]) {
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+.description-content :deep([data-copy]:hover) {
+  background-color: hsl(var(--muted));
+}
+
+.toast-enter-active,
+.toast-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translateY(0.5rem);
+}
+</style>

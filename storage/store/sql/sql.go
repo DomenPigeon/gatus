@@ -694,12 +694,18 @@ func (s *Store) updateEndpointUptime(tx *sql.Tx, endpointID int64, result *endpo
 func (s *Store) getAllEndpointKeys(tx *sql.Tx) (keys []string, err error) {
 	// Only get endpoints that have at least one result not linked to a suite
 	// This excludes endpoints that only exist as part of suites
-	// Using JOIN for better performance than EXISTS subquery
+	// EXISTS stops at the first matching result per endpoint, so this costs one index seek per
+	// endpoint. A DISTINCT over a JOIN cannot stop early: it has to materialize every matching
+	// result row into a temp b-tree, which at a 30 day retention meant scanning millions of rows
+	// on every uncached dashboard load (1.7s for 82 endpoints, versus 0.1ms here).
 	rows, err := tx.Query(`
-		SELECT DISTINCT e.endpoint_key 
+		SELECT e.endpoint_key
 		FROM endpoints e
-		INNER JOIN endpoint_results er ON e.endpoint_id = er.endpoint_id
-		WHERE er.suite_result_id IS NULL
+		WHERE EXISTS (
+			SELECT 1
+			FROM endpoint_results er
+			WHERE er.endpoint_id = e.endpoint_id AND er.suite_result_id IS NULL
+		)
 		ORDER BY e.endpoint_key
 	`)
 	if err != nil {

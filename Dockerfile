@@ -1,5 +1,9 @@
 # Build the go application into a binary
-FROM golang:alpine AS builder
+# Pinned to 1.26: golang.org/x/net v0.54.0 excludes its http2 server implementation under
+# go1.27 (//go:build !(go1.27 && !http2legacy)), which drops http2.TrailerPrefix and breaks
+# google.golang.org/grpc v1.81.1. The image sets GOTOOLCHAIN=local, so the tag decides the
+# compiler outright - an unpinned golang:alpine breaks this build on every Go release.
+FROM golang:1.26-alpine AS builder
 RUN apk --update add ca-certificates
 WORKDIR /app
 COPY . ./

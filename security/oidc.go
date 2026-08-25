@@ -26,6 +26,7 @@ type OIDCConfig struct {
 	Scopes          []string      `yaml:"scopes"`           // e.g. ["openid"]
 	AllowedSubjects []string      `yaml:"allowed-subjects"` // e.g. ["user1@example.com"]. If empty, all subjects are allowed
 	SessionTTL      time.Duration `yaml:"session-ttl"`      // e.g. 8h. Defaults to 8 hours
+	HostedDomain    string        `yaml:"hosted-domain"`    // e.g. example.com. Google only: skips the account chooser when the user has one matching account
 
 	oauth2Config oauth2.Config
 	verifier     *oidc.IDTokenVerifier
@@ -74,7 +75,12 @@ func (c *OIDCConfig) loginHandler(ctx *fiber.Ctx) error {
 		SameSite: "lax",
 		HTTPOnly: true,
 	})
-	return ctx.Redirect(c.oauth2Config.AuthCodeURL(state, oidc.Nonce(nonce)), http.StatusFound)
+	options := []oauth2.AuthCodeOption{oidc.Nonce(nonce)}
+	if len(c.HostedDomain) > 0 {
+		// Google pre-selects the matching account instead of showing the account chooser
+		options = append(options, oauth2.SetAuthURLParam("hd", c.HostedDomain))
+	}
+	return ctx.Redirect(c.oauth2Config.AuthCodeURL(state, options...), http.StatusFound)
 }
 
 func (c *OIDCConfig) callbackHandler(w http.ResponseWriter, r *http.Request) { // TODO: Migrate to a native fiber handler
